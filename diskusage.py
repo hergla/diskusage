@@ -14,7 +14,7 @@ from tabulate import tabulate
 
 pd.set_option('display.max_rows', None)
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -70,7 +70,7 @@ def collect_data(path='.'):
     for root, dirs, files in os.walk(path):
         if not files:  # need a dummy entry for sunburst.
             dtime = datetime.datetime.fromtimestamp(0)
-            data.append((root, '_', 0, dtime, dtime, dtime))
+            data.append((root, 'debug_debug', 0, dtime, dtime, dtime))
         for file in files:
             progress += 1
             if not progress % 199 and showprogress:
@@ -123,7 +123,7 @@ def excel(df, excelfile):
         pe_max = 0
         data = []
         for dirx in dfe.directory:
-            pe = dirx.split('/')
+            pe = dirx.split(sep)
             if len(pe) > pe_max:
                 pe_max = len(pe)
         for i in dfe.itertuples():
@@ -172,13 +172,27 @@ def plotit(dfp, htmlfile):
     Create Sunburst with Plotly
     :param dfp:
     '''
+    sep = os.path.sep
     df_plot = dfp.groupby('directory').agg({"size": "sum",
                                             "sizemb": "sum",
-                                            "filename": "count"})
+                                            "filename": "count"}) #.sort_values(by='size', ascending=False)
     df_plot.reset_index(level=0, inplace=True)
-    df_plot['sizemb'] = df_plot['sizemb'].apply(lambda x: round(x, 2))
+    df_plot['count_dirs'] = df_plot['directory'].apply(lambda x: len(x.split(sep)))
     df_plot['parentdir'] = df_plot['directory'].apply(lambda x: os.path.split(x)[0] or "")
     df_plot.rename(columns={'filename': 'filecount'}, inplace=True)
+    df_plot.sort_values(by='count_dirs', ascending=False, inplace=True)
+    #df_plot.to_csv("debug1.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
+    copy_df = df_plot.copy()
+    for i in df_plot.itertuples():
+        old_size = copy_df.loc[copy_df.directory == i.directory]['size']
+        old_size_parent = copy_df.loc[copy_df.directory == i.parentdir]['size']
+        if old_size_parent.empty:
+            continue
+        new_size = old_size.values[0] + old_size_parent.values[0]
+        copy_df.loc[(copy_df.directory == i.parentdir), 'size'] = new_size
+    copy_df['sizemb'] = copy_df['size'].apply(lambda x: round(x/1024/1024, 2))
+    df_plot = copy_df.sort_values(by='size', ascending=False).head(100)
+    #df_plot.to_csv("debug.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
     fig = px.sunburst(df_plot,
                       ids="directory",
                       labels="directory",
