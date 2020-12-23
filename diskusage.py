@@ -2,17 +2,18 @@
 
 import argparse
 import csv
-import datetime
+from datetime import datetime
 import os
 import sys
 from os.path import join
 from timeit import Timer
-
 import pandas as pd
 import plotly.express as px
 from tabulate import tabulate
 
+
 pd.set_option('display.max_rows', None)
+pd.options.display.float_format = '{:.2f}'.format
 
 VERSION = "1.0.2"
 
@@ -69,7 +70,7 @@ def collect_data(path='.'):
     print("collecting  ", end="", flush=True)
     for root, dirs, files in os.walk(path):
         if not files:  # need a dummy entry for sunburst.
-            dtime = datetime.datetime.fromtimestamp(0)
+            dtime = datetime.fromtimestamp(0)
             data.append((root, 'debug_debug', 0, dtime, dtime, dtime))
         for file in files:
             progress += 1
@@ -78,9 +79,9 @@ def collect_data(path='.'):
                 sys.stdout.flush()
             try:
                 fileStat = os.lstat(join(root, file))
-                mtime = datetime.datetime.fromtimestamp(fileStat.st_mtime)
-                atime = datetime.datetime.fromtimestamp(fileStat.st_atime)
-                ctime = datetime.datetime.fromtimestamp(fileStat.st_ctime)
+                mtime = datetime.fromtimestamp(fileStat.st_mtime)
+                atime = datetime.fromtimestamp(fileStat.st_atime)
+                ctime = datetime.fromtimestamp(fileStat.st_ctime)
                 data.append((root, file, fileStat.st_size, mtime, atime, ctime))
             except:
                 error_count += 1
@@ -92,17 +93,17 @@ def collect_data(path='.'):
 
 def excel(df, excelfile):
     def set_num_format(workbook, colname):
-        format = {
+        format_col = {
             'size': '#,##0.00',
             'sizemb': '#,##0.00',
             'filecount': '#,##0',
             'Count': '0',
             'default': ''
         }
-        if not colname in format:
+        if not colname in format_col:
             colname = 'default'
         cell_format = workbook.add_format()
-        cell_format.set_num_format(format[colname])
+        cell_format.set_num_format(format_col[colname])
         return cell_format
 
     def auto_size_col(df, sheet_name, writer, reset_index=True):
@@ -114,7 +115,6 @@ def excel(df, excelfile):
         worksheet.freeze_panes(1, 0)
         for i, col in enumerate(df.columns):
             cell_format = set_num_format(workbook, col)
-            # print(i, col, cell_format)
             column_len = max(df[col].astype(str).str.len().max() + 4, len(col) + 1)
             worksheet.set_column(i, i, width=column_len, cell_format=cell_format)
 
@@ -177,22 +177,30 @@ def plotit(dfp, htmlfile):
                                             "sizemb": "sum",
                                             "filename": "count"}) #.sort_values(by='size', ascending=False)
     df_plot.reset_index(level=0, inplace=True)
+    # !!! Test mit Daten von Windows
+    df_plot['directory'] = df_plot['directory'].str.replace('\\', '/')  # Kommt von Windows daher drehen
+
     df_plot['count_dirs'] = df_plot['directory'].apply(lambda x: len(x.split(sep)))
     df_plot['parentdir'] = df_plot['directory'].apply(lambda x: os.path.split(x)[0] or "")
     df_plot.rename(columns={'filename': 'filecount'}, inplace=True)
     df_plot.sort_values(by='count_dirs', ascending=False, inplace=True)
-    #df_plot.to_csv("debug1.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
+    df_plot.to_csv("debug1.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
+    df_plot.set_index('directory', inplace=True)
     copy_df = df_plot.copy()
     for i in df_plot.itertuples():
-        old_size = copy_df.loc[copy_df.directory == i.directory]['size']
-        old_size_parent = copy_df.loc[copy_df.directory == i.parentdir]['size']
-        if old_size_parent.empty:
-            continue
-        new_size = old_size.values[0] + old_size_parent.values[0]
-        copy_df.loc[(copy_df.directory == i.parentdir), 'size'] = new_size
+        this_dir = i.Index
+        parent_dir = i.parentdir
+        old_size = copy_df.at[this_dir, 'size']
+        try:
+            old_size_parent = copy_df.at[parent_dir, 'size']
+            new_size = old_size + old_size_parent
+            copy_df.at[parent_dir, 'size'] = new_size
+        except:     # root dir has no parent
+            pass
+    copy_df.reset_index(inplace=True)
     copy_df['sizemb'] = copy_df['size'].apply(lambda x: round(x/1024/1024, 2))
     df_plot = copy_df.sort_values(by='size', ascending=False).head(100)
-    #df_plot.to_csv("debug.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
+    df_plot.to_csv("debug.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
     fig = px.sunburst(df_plot,
                       ids="directory",
                       labels="directory",
@@ -200,14 +208,14 @@ def plotit(dfp, htmlfile):
                       names="directory",
                       values="size",
                       hover_data=['filecount', 'sizemb'],
-                      branchvalues="remainder",
+                      branchvalues="total",
                       color='size',
-                      color_continuous_scale='RdBu'
+                      color_continuous_scale='Greens',
                       )
     fig.update_layout(
         # grid= dict(columns=2, rows=3),
         margin=dict(t=0, l=0, r=0, b=0),
-        width=1400, height=1000
+        width=1300, height=900
     )
     fig.write_html(htmlfile)
 
@@ -245,8 +253,13 @@ if __name__ == '__main__':
     htmlfile = args.html
     top = args.top
     showprogress = args.progress
+    createTime = datetime.isoformat(datetime.now())
 
-    realpath_to_scan = os.path.realpath(scandir)
+
+    if not readcsv:
+        realpath_to_scan = os.path.realpath(scandir)
+    else:
+        realpath_to_scan = 'CSV file'
     if not '__file__' in globals():
         prg = "developing"
     else:
@@ -289,8 +302,8 @@ if __name__ == '__main__':
 
     print("Files analyzed: {}".format(len(df.index)))
     total_size = df['size'].sum()
-    total_sizemb = total_size / 1024 / 1024
-    print(f"Total size: {total_sizemb} MB")
+    total_sizegb = total_size / 1024 / 1024 / 1024
+    print(f"Total size: {total_sizegb} GB")
     print(f"\nTop {top} directories by size:")
     print("---------------------------------------------------------------------")
     print(tabulate(file_sizedir(sortby='size', count=top)[['filecount', 'sizemb']],
@@ -320,11 +333,13 @@ if __name__ == '__main__':
     count_directories = len(x.index)
 
     summary = {
-        'Remark': ['Scanned Directory', 'Count Directories', 'Count Files', 'Total Size (MB)', 'Collection Errors'],
-        'Count': [scandir, count_directories, count_files, total_sizemb, error_count]}
+        'Remark': ['Scanned Directory', 'Count Directories', 'Count Files', 'Total Size (GB)', 'Collection Errors',
+                   'Creation Time'],
+        'Count': [scandir, count_directories, count_files, total_sizegb, error_count, createTime]}
     df_summary = pd.DataFrame(summary)
+    print("\nSummary:")
     print(df_summary)
-
+    print()
     # Excel handling
     if excelfile:
         print(f"\nCreating Excel File -  ", end="")
@@ -334,6 +349,5 @@ if __name__ == '__main__':
 
     if htmlfile:
         print("Creating HTML file.", end="", flush=True)
-        #plotit(df, htmlfile)
         runtime, _ = run_time(plotit, df, htmlfile)
         print(f" {runtime} seconds.")
