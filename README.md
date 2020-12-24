@@ -106,5 +106,4 @@ Creating HTML file. 0.4460548529999997 seconds.
 - Pandas
 - plotly with plotly.express (express included with 4.14)
 - tabulate
-- xlsxwriter
-
+- xlsxwrit
