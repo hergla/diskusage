@@ -10,12 +10,12 @@ from timeit import Timer
 import pandas as pd
 import plotly.express as px
 from tabulate import tabulate
-
+from pathlib import PurePath, PureWindowsPath
 
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -58,7 +58,9 @@ def largest_files(count=16):
 
 
 def oldest_files(count=16):
-    oldest = df.sort_values(by='mtime', ascending=False)
+    filt = df['filename'] == '_'   # remove our dummy entries
+    oldest = df.drop(index=df[filt].index)
+    oldest = oldest.sort_values(by='mtime', ascending=False)
     return oldest.tail(count)
 
 
@@ -82,6 +84,7 @@ def collect_data(path='.'):
                 mtime = datetime.fromtimestamp(fileStat.st_mtime)
                 atime = datetime.fromtimestamp(fileStat.st_atime)
                 ctime = datetime.fromtimestamp(fileStat.st_ctime)
+                root = PureWindowsPath(root).as_posix()
                 data.append((root, file, fileStat.st_size, mtime, atime, ctime))
             except:
                 error_count += 1
@@ -178,7 +181,7 @@ def plotit(dfp, htmlfile):
                                             "filename": "count"}) #.sort_values(by='size', ascending=False)
     df_plot.reset_index(level=0, inplace=True)
     # !!! Test mit Daten von Windows
-    df_plot['directory'] = df_plot['directory'].str.replace('\\', '/')  # Kommt von Windows daher drehen
+    # df_plot['directory'] = df_plot['directory'].str.replace('\\', '/')  # Kommt von Windows daher drehen
 
     df_plot['count_dirs'] = df_plot['directory'].apply(lambda x: len(x.split(sep)))
     df_plot['parentdir'] = df_plot['directory'].apply(lambda x: os.path.split(x)[0] or "")
@@ -280,6 +283,8 @@ if __name__ == '__main__':
                   'realpath': 'str', 'sizemb': 'float'}
         # df = pd.read_csv('/var/tmp/diskusage.csv', parse_dates=parse_dates, dtype=dtypes, sep='\t', header=0)
         runtime_csv, df = run_time(pd.read_csv, readcsv, parse_dates=parse_dates, dtype=dtypes, sep='\t', header=0)
+        df['directory'] = df['directory'].apply(lambda x: PureWindowsPath(x).as_posix())
+        df['realpath'] = df['realpath'].apply(lambda x: PureWindowsPath(x).as_posix())
         print(f"Loading CSV took {runtime_csv} seconds")
     else:
         # data, error_count = collect_data(path=scandir)
