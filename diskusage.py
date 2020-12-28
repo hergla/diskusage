@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.6"
+VERSION = "1.0.6a"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -73,6 +73,7 @@ def collect_data(path='.'):
     for root, dirs, files in os.walk(path):
         if not files:  # need a dummy entry for sunburst.
             dtime = datetime.fromtimestamp(0)
+            root = PureWindowsPath(root).as_posix()
             data.append((root, '_', 0, dtime, dtime, dtime))
         for file in files:
             progress += 1
@@ -122,7 +123,7 @@ def excel(df, excelfile):
             worksheet.set_column(i, i, width=column_len, cell_format=cell_format)
 
     def sunburst4excel(dfe):
-        sep = os.path.sep
+        sep = '/'
         pe_max = 0
         data = []
         for dirx in dfe.directory:
