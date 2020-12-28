@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.6a"
+VERSION = "1.0.6b"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -310,12 +310,6 @@ if __name__ == '__main__':
             df.to_csv(writecsv, index=False, sep='\t', quoting=csv.QUOTE_ALL)
 
     print()
-    # Excel handling
-    if excelfile:
-        print(f"\nCreating Excel File -  ", end="")
-        #excel(df, excelfile)
-        runtime, _ = run_time(excel, df, excelfile)
-        print(f" {runtime} seconds.")
 
     if htmlfile:
         print("Creating HTML file.", end="", flush=True)
@@ -361,3 +355,10 @@ if __name__ == '__main__':
     df_summary = pd.DataFrame(summary)
     print("\nSummary:")
     print(df_summary)
+    print()
+    # Excel handling
+    if excelfile:
+        print(f"\nCreating Excel File -  ", end="")
+        #excel(df, excelfile)
+        runtime, _ = run_time(excel, df, excelfile)
+        print(f" {runtime} seconds.")
