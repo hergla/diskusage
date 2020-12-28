@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.4"
+VERSION = "1.0.6"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -73,7 +73,7 @@ def collect_data(path='.'):
     for root, dirs, files in os.walk(path):
         if not files:  # need a dummy entry for sunburst.
             dtime = datetime.fromtimestamp(0)
-            data.append((root, 'debug_debug', 0, dtime, dtime, dtime))
+            data.append((root, '_', 0, dtime, dtime, dtime))
         for file in files:
             progress += 1
             if not progress % 199 and showprogress:
@@ -190,7 +190,7 @@ def plotit(dfp, htmlfile):
     df_plot.loc[filt, 'parentdir'] = ''
     df_plot.rename(columns={'filename': 'filecount'}, inplace=True)
     df_plot.sort_values(by='count_dirs', ascending=False, inplace=True)
-    df_plot.to_csv("debug1.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
+    #df_plot.to_csv("debug1.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
     df_plot.set_index('directory', inplace=True)
     copy_df = df_plot.copy()
     for i in df_plot.itertuples():
@@ -206,7 +206,7 @@ def plotit(dfp, htmlfile):
     copy_df.reset_index(inplace=True)
     copy_df['sizemb'] = copy_df['size'].apply(lambda x: round(x/1024/1024, 2))
     df_plot = copy_df.sort_values(by='size', ascending=False).head(100)
-    df_plot.to_csv("debug.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
+    #df_plot.to_csv("debug.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
     fig = px.sunburst(df_plot,
                       ids="directory",
                       labels="directory",
@@ -302,11 +302,24 @@ if __name__ == '__main__':
         # print(f"Loadind Pandas took {runtime_load_df} seconds")
         data = []
         # Add realpath
-        df['realpath'] = df.apply(lambda x: join(x.directory, x.filename), axis=1)
+        df['realpath'] = df.apply(lambda x: str(PurePosixPath(x.directory).joinpath(x.filename)), axis=1)
         # Add size in MiB
         df['sizemb'] = df['size'].apply(lambda x: round(x / 1024 / 1024, 2))
         if writecsv:
             df.to_csv(writecsv, index=False, sep='\t', quoting=csv.QUOTE_ALL)
+
+    print()
+    # Excel handling
+    if excelfile:
+        print(f"\nCreating Excel File -  ", end="")
+        #excel(df, excelfile)
+        runtime, _ = run_time(excel, df, excelfile)
+        print(f" {runtime} seconds.")
+
+    if htmlfile:
+        print("Creating HTML file.", end="", flush=True)
+        runtime, _ = run_time(plotit, df, htmlfile)
+        print(f" {runtime} seconds.")
 
     print("Files analyzed: {}".format(len(df.index)))
     total_size = df['size'].sum()
@@ -347,15 +360,3 @@ if __name__ == '__main__':
     df_summary = pd.DataFrame(summary)
     print("\nSummary:")
     print(df_summary)
-    print()
-    # Excel handling
-    if excelfile:
-        print(f"\nCreating Excel File -  ", end="")
-        #excel(df, excelfile)
-        runtime, _ = run_time(excel, df, excelfile)
-        print(f" {runtime} seconds.")
-
-    if htmlfile:
-        print("Creating HTML file.", end="", flush=True)
-        runtime, _ = run_time(plotit, df, htmlfile)
-        print(f" {runtime} seconds.")
