@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -186,7 +186,7 @@ def plotit(dfp, htmlfile):
     df_plot['count_dirs'] = df_plot['directory'].apply(lambda x: len(x.split(sep)))
     #df_plot['parentdir'] = df_plot['directory'].apply(lambda x: os.path.split(x)[0] or "")
     df_plot['parentdir'] = df_plot['directory'].apply(lambda x: str(PurePosixPath(x).parent) or "")
-    filt = (df_plot['directory']=='.') & (df_plot['parentdir'=='.'])
+    filt = (df_plot['directory'] == '.') & (df_plot['parentdir'] == '.')
     df_plot.loc[filt, 'parentdir'] = ''
     df_plot.rename(columns={'filename': 'filecount'}, inplace=True)
     df_plot.sort_values(by='count_dirs', ascending=False, inplace=True)
