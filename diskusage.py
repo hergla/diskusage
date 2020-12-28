@@ -10,7 +10,7 @@ from timeit import Timer
 import pandas as pd
 import plotly.express as px
 from tabulate import tabulate
-from pathlib import PurePath, PureWindowsPath
+from pathlib import PurePath, PureWindowsPath, PurePosixPath
 
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
@@ -175,7 +175,7 @@ def plotit(dfp, htmlfile):
     Create Sunburst with Plotly
     :param dfp:
     '''
-    sep = os.path.sep
+    sep = '/'
     df_plot = dfp.groupby('directory').agg({"size": "sum",
                                             "sizemb": "sum",
                                             "filename": "count"}) #.sort_values(by='size', ascending=False)
@@ -184,7 +184,10 @@ def plotit(dfp, htmlfile):
     # df_plot['directory'] = df_plot['directory'].str.replace('\\', '/')  # Kommt von Windows daher drehen
 
     df_plot['count_dirs'] = df_plot['directory'].apply(lambda x: len(x.split(sep)))
-    df_plot['parentdir'] = df_plot['directory'].apply(lambda x: os.path.split(x)[0] or "")
+    #df_plot['parentdir'] = df_plot['directory'].apply(lambda x: os.path.split(x)[0] or "")
+    df_plot['parentdir'] = df_plot['directory'].apply(lambda x: str(PurePosixPath(x).parent) or "")
+    filt = (df_plot['directory']=='.') & (df_plot['parentdir'=='.'])
+    df_plot.loc[filt, 'parentdir'] = ''
     df_plot.rename(columns={'filename': 'filecount'}, inplace=True)
     df_plot.sort_values(by='count_dirs', ascending=False, inplace=True)
     df_plot.to_csv("debug1.csv", index=False, sep='\t', quoting=csv.QUOTE_ALL)
