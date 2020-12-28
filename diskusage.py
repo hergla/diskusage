@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.6b"
+VERSION = "1.0.6c"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -139,32 +139,32 @@ def excel(df, excelfile):
         return pd.DataFrame(data)
 
     try:
-        print("Sheet: ", end="", flush=True)
+        print("Sheet: ", end="")
         with pd.ExcelWriter(excelfile, engine="xlsxwriter") as writer:
-            print("Summary - ", end="", flush=True)
+            #print("Summary - ", end="", flush=True)
             auto_size_col(df_summary, sheet_name="Summary", writer=writer)
-            print("BySize - ", end="", flush=True)
+            #print("BySize - ", end="", flush=True)
             df_fsd = file_sizedir(sortby='size', count=1000000)
             auto_size_col(df_fsd, sheet_name="BySize", writer=writer)
-            print("ByFilecount- ", end="", flush=True)
+            #print("ByFilecount- ", end="", flush=True)
             df_fcd = file_sizedir(sortby='filename', count=1000000)
             auto_size_col(df_fcd, sheet_name="ByFilecount", writer=writer)
             del df_fcd
-            print("LargeFiles - ", end="", flush=True)
+            #print("LargeFiles - ", end="", flush=True)
             df_lf = largest_files(count=1000000)[['realpath', 'sizemb', 'mtime']]
             df_lf.reset_index(drop=True, inplace=True)
             auto_size_col(df_lf, sheet_name="LargeFiles", writer=writer, reset_index=False)
             del df_lf
-            print("OldFiles - ", end="", flush=True)
+            #print("OldFiles - ", end="", flush=True)
             df_of = oldest_files(count=1000000)[['mtime', 'atime', 'ctime', 'sizemb', 'realpath']]
             df_of.reset_index(drop=True, inplace=True)
             auto_size_col(df_of, sheet_name="OldFiles", writer=writer, reset_index=False)
             del df_of
-            print("SunburstData - ", end="", flush=True)
+            #print("SunburstData - ", end="", flush=True)
             df_sunburst = sunburst4excel(df_fsd)
             df_sunburst.to_excel(writer, sheet_name="SunburstData")
             del df_sunburst
-            print("RawData", end="", flush=True)
+            #print("RawData", end="", flush=True)
             df.to_excel(writer, sheet_name="RawData")
     except Exception as e:
         print("failed: ", end="")
