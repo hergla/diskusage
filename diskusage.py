@@ -32,7 +32,7 @@ def run_time(func, *args, **kwargs):
 
     timer = Timer(wrapped)
     delta = timer.timeit(1)
-    return delta, returns.pop()
+    return round(delta, 2), returns.pop()
 
 
 def file_sizedir(sortby, count=16):
@@ -161,11 +161,11 @@ def excel(df, excelfile):
             auto_size_col(df_of, sheet_name="OldFiles", writer=writer, reset_index=False)
             del df_of
             #print("SunburstData - ", end="", flush=True)
-            df_sunburst = sunburst4excel(df_fsd)
-            df_sunburst.to_excel(writer, sheet_name="SunburstData")
-            del df_sunburst
+            #df_sunburst = sunburst4excel(df_fsd)
+            #df_sunburst.to_excel(writer, sheet_name="SunburstData")
+            #del df_sunburst
             #print("RawData", end="", flush=True)
-            df.to_excel(writer, sheet_name="RawData")
+            #df.to_excel(writer, sheet_name="RawData")
     except Exception as e:
         print("failed: ", end="")
         print(e)
@@ -295,7 +295,7 @@ if __name__ == '__main__':
         runtime_collect, returns = run_time(collect_data, path=scandir)
         data = returns[0]
         error_count = returns[1]
-        print(f"Scanning took {runtime_collect} seconds")
+        print(f"Scanning completed in {runtime_collect} seconds")
         print(f"Errors during collection: {error_count}")
         df = pd.DataFrame(data, columns=['directory', 'filename', 'size', 'mtime', 'atime', 'ctime'])
         # runtime_load_df, df = run_time(pd.DataFrame, data,
@@ -307,7 +307,7 @@ if __name__ == '__main__':
         # Add size in MiB
         df['sizemb'] = df['size'].apply(lambda x: round(x / 1024 / 1024, 2))
         if writecsv:
-            df.to_csv(writecsv, index=False, sep='\t', quoting=csv.QUOTE_ALL)
+            df.to_csv(writecsv, index=False, sep='\t', quoting=csv.QUOTE_ALL, errors='replace')
 
     print()
 
@@ -359,6 +359,6 @@ if __name__ == '__main__':
     # Excel handling
     if excelfile:
         print(f"\nCreating Excel File -  ", end="")
-        #excel(df, excelfile)
-        runtime, _ = run_time(excel, df, excelfile)
-        print(f" {runtime} seconds.")
+        excel(df, excelfile)
+        #runtime, _ = run_time(excel, df, excelfile)
+        #print(f" {runtime} seconds.")
