@@ -141,21 +141,21 @@ def excel(df, excelfile):
     try:
         print("Sheet: ", end="")
         with pd.ExcelWriter(excelfile, engine="xlsxwriter") as writer:
-            #print("Summary - ", end="", flush=True)
+            print("Summary - ", end="", flush=True)
             auto_size_col(df_summary, sheet_name="Summary", writer=writer)
-            #print("BySize - ", end="", flush=True)
+            print("BySize - ", end="", flush=True)
             df_fsd = file_sizedir(sortby='size', count=1000000)
             auto_size_col(df_fsd, sheet_name="BySize", writer=writer)
-            #print("ByFilecount- ", end="", flush=True)
+            print("ByFilecount- ", end="", flush=True)
             df_fcd = file_sizedir(sortby='filename', count=1000000)
             auto_size_col(df_fcd, sheet_name="ByFilecount", writer=writer)
             del df_fcd
-            #print("LargeFiles - ", end="", flush=True)
+            print("LargeFiles - ", end="", flush=True)
             df_lf = largest_files(count=1000000)[['realpath', 'sizemb', 'mtime']]
             df_lf.reset_index(drop=True, inplace=True)
             auto_size_col(df_lf, sheet_name="LargeFiles", writer=writer, reset_index=False)
             del df_lf
-            #print("OldFiles - ", end="", flush=True)
+            print("OldFiles - ", end="", flush=True)
             df_of = oldest_files(count=1000000)[['mtime', 'atime', 'ctime', 'sizemb', 'realpath']]
             df_of.reset_index(drop=True, inplace=True)
             auto_size_col(df_of, sheet_name="OldFiles", writer=writer, reset_index=False)
