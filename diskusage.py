@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.6c"
+VERSION = "1.0.7"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -86,7 +86,8 @@ def collect_data(path='.'):
                 atime = datetime.fromtimestamp(fileStat.st_atime)
                 ctime = datetime.fromtimestamp(fileStat.st_ctime)
                 root = PureWindowsPath(root).as_posix()
-                data.append((root, file, fileStat.st_size, mtime, atime, ctime))
+                recode_file = file.encode('utf-8', errors='replace').decode()
+                data.append((root, recode_file, fileStat.st_size, mtime, atime, ctime))
             except:
                 error_count += 1
         if '.snapshot' in dirs:  # drop Netapp snapdir visible
@@ -140,7 +141,7 @@ def excel(df, excelfile):
 
     try:
         print("Sheet: ", end="")
-        with pd.ExcelWriter(excelfile, engine="xlsxwriter") as writer:
+        with pd.ExcelWriter(excelfile, engine="xlsxwriter", options=dict(constant_memory=True)) as writer:
             print("Summary - ", end="", flush=True)
             auto_size_col(df_summary, sheet_name="Summary", writer=writer)
             print("BySize - ", end="", flush=True)
@@ -359,6 +360,8 @@ if __name__ == '__main__':
     # Excel handling
     if excelfile:
         print(f"\nCreating Excel File -  ", end="")
-        excel(df, excelfile)
-        #runtime, _ = run_time(excel, df, excelfile)
-        #print(f" {runtime} seconds.")
+        #excel(df, excelfile)
+        runtime, _ = run_time(excel, df, excelfile)
+        print(f" {runtime} seconds.")
+    print()
+    sys.exit(0)
