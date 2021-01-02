@@ -141,7 +141,7 @@ def excel(df, excelfile):
 
     try:
         print("Sheet: ", end="")
-        with pd.ExcelWriter(excelfile, engine="xlsxwriter", options=dict(constant_memory=True)) as writer:
+        with pd.ExcelWriter(excelfile, engine="xlsxwriter") as writer:
             print("Summary - ", end="", flush=True)
             auto_size_col(df_summary, sheet_name="Summary", writer=writer)
             print("BySize - ", end="", flush=True)
