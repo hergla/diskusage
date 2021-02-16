@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.7"
+VERSION = "1.0.8"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -355,7 +355,7 @@ if __name__ == '__main__':
         'Count': [scandir, count_directories, count_files, total_sizegb, error_count, createTime]}
     df_summary = pd.DataFrame(summary)
     print("\nSummary:")
-    print(df_summary)
+    #print(df_summary)
     print()
     # Excel handling
     if excelfile:
