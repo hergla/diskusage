@@ -15,7 +15,7 @@ from pathlib import PurePath, PureWindowsPath, PurePosixPath
 pd.set_option('display.max_rows', None)
 pd.options.display.float_format = '{:.2f}'.format
 
-VERSION = "1.0.8"
+VERSION = "1.0.9"
 
 '''
 Pandas Dataframe -> 'directory', 'filename', 'size', 'mtime', 'atime', 'ctime', 'realpath'
@@ -53,7 +53,7 @@ def largest_files(count=16):
     :param count: number of largest files.
     :return: df with largest files
     '''
-    largest = df[{'realpath', 'sizemb', 'mtime', 'size'}].nlargest(count, columns='size')
+    largest = df[['realpath', 'sizemb', 'mtime', 'size']].nlargest(count, columns='size')
     return largest
 
 
