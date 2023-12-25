@@ -1,0 +1,1 @@
+Die Datei hat keine Bedeutung und dient nur fuer git tests.
